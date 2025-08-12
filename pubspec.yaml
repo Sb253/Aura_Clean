@@ -41,12 +41,12 @@ dependencies:
   photo_manager: ^3.0.0
   crypto: ^3.0.3
 
-  google_fonts: any
-  equatable: any
-  in_app_purchase: any
-  percent_indicator: any
-  animate_do: any
-  flutter_card_swiper: any
+  google_fonts: ^6.1.0
+  equatable: ^2.0.5
+  in_app_purchase: ^3.1.13
+  percent_indicator: ^4.2.3
+  animate_do: ^3.3.3
+  flutter_card_swiper: ^7.0.2
 dev_dependencies:
   flutter_test:
     sdk: flutter

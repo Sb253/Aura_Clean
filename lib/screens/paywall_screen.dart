@@ -1,4 +1,6 @@
 import 'package:aura_clean/blocs/purchase_bloc.dart';
+import 'package:aura_clean/blocs/purchase_state.dart';
+import 'package:aura_clean/blocs/purchase_event.dart';
 import 'package:aura_clean/widgets/custom_button.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -83,7 +85,7 @@ class _PaywallScreenState extends State<PaywallScreen> {
                 ),
                 if (state.purchasePending)
                   Container(
-                    color: Colors.black.withOpacity(0.5),
+                    color: Colors.black.withValues(alpha: 0.5),
                     child: const Center(child: CircularProgressIndicator()),
                   ),
               ],
@@ -124,7 +126,7 @@ class _PaywallScreenState extends State<PaywallScreen> {
         duration: const Duration(milliseconds: 200),
         padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
         decoration: BoxDecoration(
-          color: isSelected ? const Color(0xFF007AFF).withOpacity(0.2) : Colors.grey.shade800.withOpacity(0.5),
+          color: isSelected ? const Color(0xFF007AFF).withValues(alpha: 0.2) : Colors.grey.shade800.withValues(alpha: 0.5),
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
             color: isSelected ? const Color(0xFF007AFF) : (isFeatured ? Colors.amber : Colors.transparent),

@@ -1,4 +1,6 @@
 import 'package:aura_clean/blocs/photo_cleaner_bloc.dart';
+import 'package:aura_clean/blocs/photo_cleaner_state.dart';
+import 'package:aura_clean/blocs/photo_cleaner_event.dart';
 import 'package:aura_clean/blocs/purchase_bloc.dart';
 import 'package:aura_clean/models/photo_asset.dart';
 import 'package:aura_clean/screens/paywall_screen.dart';
@@ -273,7 +275,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             borderRadius: BorderRadius.circular(20),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.05),
+                color: Colors.black.withValues(alpha: 0.05),
                 spreadRadius: 2,
                 blurRadius: 10,
               ),

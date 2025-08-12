@@ -1,11 +1,9 @@
 import 'dart:async';
 import 'package:aura_clean/constants/app_constants.dart';
+import 'package:aura_clean/blocs/purchase_event.dart';
+import 'package:aura_clean/blocs/purchase_state.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:in_app_purchase/in_app_purchase.dart';
-import 'package:equatable/equatable.dart';
-
-part 'purchase_event.dart';
-part 'purchase_state.dart';
 
 class PurchaseBloc extends Bloc<PurchaseEvent, PurchaseState> {
   late StreamSubscription<List<PurchaseDetails>> _purchaseSubscription;

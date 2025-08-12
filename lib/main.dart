@@ -1,6 +1,7 @@
 import 'package:aura_clean/blocs/photo_cleaner_bloc.dart';
 import 'package:aura_clean/blocs/purchase_bloc.dart';
 import 'package:aura_clean/blocs/theme_bloc.dart';
+import 'package:aura_clean/blocs/theme_state.dart';
 import 'package:aura_clean/repositories/photo_repository.dart';
 import 'package:aura_clean/repositories/settings_repository.dart';
 import 'package:aura_clean/screens/dashboard_screen.dart';

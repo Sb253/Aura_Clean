@@ -1,5 +1,7 @@
 import 'dart:math';
 import 'package:aura_clean/blocs/photo_cleaner_bloc.dart';
+import 'package:aura_clean/blocs/photo_cleaner_event.dart';
+import 'package:aura_clean/blocs/photo_cleaner_state.dart';
 import 'package:aura_clean/models/photo_asset.dart';
 import 'package:aura_clean/widgets/custom_button.dart';
 import 'package:aura_clean/widgets/photo_card.dart';
@@ -33,16 +35,6 @@ class _SwipeReviewScreenState extends State<SwipeReviewScreen> {
 
       _photosToReview.addAll(allPhotosSet.toList());
       _photosToReview.shuffle();
-    }
-  }
-
-  void _onSwipe(int index, CardSwiperDirection direction) {
-    if (direction == CardSwiperDirection.left) {
-      setState(() {
-        final photo = _photosToReview[index];
-        _photosToDelete.add(photo);
-        _spaceToFree += photo.size;
-      });
     }
   }
 
@@ -105,13 +97,22 @@ class _SwipeReviewScreenState extends State<SwipeReviewScreen> {
                 child: CardSwiper(
                   controller: _controller,
                   cardsCount: _photosToReview.length,
-                  onSwipe: _onSwipe,
+                  onSwipe: (index, percentThresholdX, direction) {
+                    if (direction == CardSwiperDirection.left) {
+                      setState(() {
+                        final photo = _photosToReview[index];
+                        _photosToDelete.add(photo);
+                        _spaceToFree += photo.size;
+                      });
+                    }
+                    return true;
+                  },
                   numberOfCardsDisplayed: 3,
                   backCardOffset: const Offset(40, 40),
                   padding: const EdgeInsets.all(24.0),
                   cardBuilder: (context, index, percentThresholdX, percentThresholdY) {
                     final photo = _photosToReview[index];
-                    return PhotoCard(photoAsset: photo);
+                    return PhotoCard(photo: photo);
                   },
                 ),
               ),
@@ -130,12 +131,12 @@ class _SwipeReviewScreenState extends State<SwipeReviewScreen> {
                       IconButton.filled(
                         style: IconButton.styleFrom(backgroundColor: Colors.white, foregroundColor: Colors.red),
                         icon: const Icon(CupertinoIcons.xmark, size: 30),
-                        onPressed: () => _controller.swipeLeft(),
+                        onPressed: () => _controller.swipe(CardSwiperDirection.left),
                       ),
                       IconButton.filled(
                         style: IconButton.styleFrom(backgroundColor: Colors.white, foregroundColor: Colors.green),
                         icon: const Icon(CupertinoIcons.checkmark_alt, size: 30),
-                        onPressed: () => _controller.swipeRight(),
+                        onPressed: () => _controller.swipe(CardSwiperDirection.right),
                       ),
                     ],
                   ),

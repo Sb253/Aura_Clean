@@ -1,4 +1,5 @@
 import 'package:aura_clean/blocs/photo_cleaner_bloc.dart';
+import 'package:aura_clean/blocs/photo_cleaner_event.dart';
 import 'package:aura_clean/blocs/purchase_bloc.dart';
 import 'package:aura_clean/models/photo_asset.dart';
 import 'package:aura_clean/repositories/photo_repository.dart';
@@ -139,7 +140,7 @@ class _ReviewScreenState extends State<ReviewScreen> {
               _handleSwipe(false);
             }
           },
-          child: PhotoCard(photoAsset: photo),
+          child: PhotoCard(photo: photo),
         );
       }).toList(),
     );

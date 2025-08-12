@@ -1,12 +1,10 @@
 import 'package:aura_clean/blocs/purchase_bloc.dart';
+import 'package:aura_clean/blocs/photo_cleaner_event.dart';
+import 'package:aura_clean/blocs/photo_cleaner_state.dart';
 import 'package:aura_clean/repositories/settings_repository.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:equatable/equatable.dart';
 import 'package:aura_clean/models/photo_asset.dart';
 import 'package:aura_clean/repositories/photo_repository.dart';
-
-part 'photo_cleaner_event.dart';
-part 'photo_cleaner_state.dart';
 
 const int dailyDeletionLimit = 15;
 
@@ -55,8 +53,7 @@ class PhotoCleanerBloc extends Bloc<PhotoCleanerEvent, PhotoCleanerState> {
       final dailyCount = await _settingsRepository.getDailyDeletionCount();
 
       if (dailyCount + event.photosToDelete.length > dailyDeletionLimit) {
-        emit(FreeTierLimitReached(
-            "You've reached your daily limit of $dailyDeletionLimit photos. Upgrade to Pro for unlimited cleaning."));
+        emit(const FreeTierLimitReached("You've reached the free tier limit. Upgrade to continue."));
       } else {
         await _performDeletion(event.photosToDelete, emit);
         await _settingsRepository.incrementDailyDeletionCount(event.photosToDelete.length);

@@ -7,8 +7,8 @@ class PhotoAsset extends Equatable {
   final int width;
   final int height;
   final int size;
-  final DateTime createDateTime;
-  final AssetType type;
+  final DateTime? createDateTime;
+  final AssetType? type;
 
   const PhotoAsset({
     required this.entity,
@@ -16,8 +16,8 @@ class PhotoAsset extends Equatable {
     required this.width,
     required this.height,
     required this.size,
-    required this.createDateTime,
-    required this.type,
+    this.createDateTime,
+    this.type,
   });
 
   factory PhotoAsset.fromEntity(AssetEntity entity) {

@@ -15,11 +15,15 @@ class PermissionsScreen extends StatelessWidget {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setBool('onboarding_complete', true);
 
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (context) => const DashboardScreen()),
-      );
+      if (context.mounted) {
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(builder: (context) => const DashboardScreen()),
+        );
+      }
     } else {
-      PhotoManager.openSetting();
+      if (context.mounted) {
+        PhotoManager.openSetting();
+      }
     }
   }
 
