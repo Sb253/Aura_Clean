@@ -55,7 +55,7 @@ class AuraCleanApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiBlocProvider(
       providers: [
-        BlocProvider(create: (context) => PurchaseBloc()),
+        BlocProvider(create: (context) => PurchaseBloc(settingsRepository: settingsRepository)),
         BlocProvider(
           create: (context) => ThemeBloc(
             isDark: isDark,

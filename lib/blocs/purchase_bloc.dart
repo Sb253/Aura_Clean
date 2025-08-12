@@ -2,14 +2,18 @@ import 'dart:async';
 import 'package:aura_clean/constants/app_constants.dart';
 import 'package:aura_clean/blocs/purchase_event.dart';
 import 'package:aura_clean/blocs/purchase_state.dart';
+import 'package:aura_clean/repositories/settings_repository.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:in_app_purchase/in_app_purchase.dart';
 
 class PurchaseBloc extends Bloc<PurchaseEvent, PurchaseState> {
   late StreamSubscription<List<PurchaseDetails>> _purchaseSubscription;
   final InAppPurchase _inAppPurchase = InAppPurchase.instance;
+  final SettingsRepository _settingsRepository;
 
-  PurchaseBloc() : super(const PurchaseState()) {
+  PurchaseBloc({required SettingsRepository settingsRepository}) 
+      : _settingsRepository = settingsRepository,
+        super(const PurchaseState()) {
     _purchaseSubscription = _inAppPurchase.purchaseStream.listen(
       _onPurchaseUpdated,
       onDone: () => _purchaseSubscription.cancel(),
@@ -22,12 +26,17 @@ class PurchaseBloc extends Bloc<PurchaseEvent, PurchaseState> {
     on<LoadProducts>(_onLoadProducts);
     on<BuyProduct>(_onBuyProduct);
     on<RestorePurchases>(_onRestorePurchases);
+    on<CheckTrialStatus>(_onCheckTrialStatus);
+    on<StartTrial>(_onStartTrial);
 
     _inAppPurchase.isAvailable().then((available) {
       if (available) {
         add(LoadProducts());
       }
     });
+    
+    // Check trial status on initialization
+    add(CheckTrialStatus());
   }
 
   Future<void> _onLoadProducts(LoadProducts event, Emitter<PurchaseState> emit) async {
@@ -51,6 +60,16 @@ class PurchaseBloc extends Bloc<PurchaseEvent, PurchaseState> {
 
   Future<void> _onRestorePurchases(RestorePurchases event, Emitter<PurchaseState> emit) async {
     await _inAppPurchase.restorePurchases();
+  }
+
+  void _onCheckTrialStatus(CheckTrialStatus event, Emitter<PurchaseState> emit) async {
+    final isTrialActive = await _settingsRepository.isTrialActive();
+    emit(state.copyWith(isTrialActive: isTrialActive));
+  }
+
+  void _onStartTrial(StartTrial event, Emitter<PurchaseState> emit) async {
+    await _settingsRepository.startTrial();
+    emit(state.copyWith(isTrialActive: true));
   }
 
   void _onPurchaseUpdated(List<PurchaseDetails> purchaseDetailsList) {

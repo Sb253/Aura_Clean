@@ -5,6 +5,7 @@ import 'package:aura_clean/blocs/photo_cleaner_state.dart';
 import 'package:aura_clean/models/photo_asset.dart';
 import 'package:aura_clean/widgets/custom_button.dart';
 import 'package:aura_clean/widgets/photo_card.dart';
+import 'package:aura_clean/widgets/premium_gate.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -86,69 +87,72 @@ class _SwipeReviewScreenState extends State<SwipeReviewScreen> {
         title: const Text('Review & Sort'),
       ),
       body: SafeArea(
-        child: Column(
-          children: [
-            if (_photosToReview.isEmpty)
-              const Expanded(
-                child: Center(child: Text("No photos found to review! Run an analysis first.")),
-              )
-            else
-              Expanded(
-                child: CardSwiper(
-                  controller: _controller,
-                  cardsCount: _photosToReview.length,
-                  onSwipe: (index, percentThresholdX, direction) {
-                    if (direction == CardSwiperDirection.left) {
-                      setState(() {
-                        final photo = _photosToReview[index];
-                        _photosToDelete.add(photo);
-                        _spaceToFree += photo.size;
-                      });
-                    }
-                    return true;
-                  },
-                  numberOfCardsDisplayed: 3,
-                  backCardOffset: const Offset(40, 40),
-                  padding: const EdgeInsets.all(24.0),
-                  cardBuilder: (context, index, percentThresholdX, percentThresholdY) {
-                    final photo = _photosToReview[index];
-                    return PhotoCard(photo: photo);
-                  },
+        child: PremiumGate(
+          featureName: 'Tinder-like Swipe Review',
+          child: Column(
+            children: [
+              if (_photosToReview.isEmpty)
+                const Expanded(
+                  child: Center(child: Text("No photos found to review! Run an analysis first.")),
+                )
+              else
+                Expanded(
+                  child: CardSwiper(
+                    controller: _controller,
+                    cardsCount: _photosToReview.length,
+                    onSwipe: (index, percentThresholdX, direction) {
+                      if (direction == CardSwiperDirection.left) {
+                        setState(() {
+                          final photo = _photosToReview[index];
+                          _photosToDelete.add(photo);
+                          _spaceToFree += photo.size;
+                        });
+                      }
+                      return true;
+                    },
+                    numberOfCardsDisplayed: 3,
+                    backCardOffset: const Offset(40, 40),
+                    padding: const EdgeInsets.all(24.0),
+                    cardBuilder: (context, index, percentThresholdX, percentThresholdY) {
+                      final photo = _photosToReview[index];
+                      return PhotoCard(photo: photo);
+                    },
+                  ),
+                ),
+              Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  children: [
+                    Text(
+                      "Space to be Freed: ${_formatBytes(_spaceToFree)}",
+                      style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                    ),
+                    const SizedBox(height: 10),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: [
+                        IconButton.filled(
+                          style: IconButton.styleFrom(backgroundColor: Colors.white, foregroundColor: Colors.red),
+                          icon: const Icon(CupertinoIcons.xmark, size: 30),
+                          onPressed: () => _controller.swipe(CardSwiperDirection.left),
+                        ),
+                        IconButton.filled(
+                          style: IconButton.styleFrom(backgroundColor: Colors.white, foregroundColor: Colors.green),
+                          icon: const Icon(CupertinoIcons.checkmark_alt, size: 30),
+                          onPressed: () => _controller.swipe(CardSwiperDirection.right),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 20),
+                    CustomButton(
+                      text: "Delete Swiped Photos",
+                      onPressed: _confirmAndDelete,
+                    ),
+                  ],
                 ),
               ),
-            Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                children: [
-                  Text(
-                    "Space to be Freed: ${_formatBytes(_spaceToFree)}",
-                    style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 10),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: [
-                      IconButton.filled(
-                        style: IconButton.styleFrom(backgroundColor: Colors.white, foregroundColor: Colors.red),
-                        icon: const Icon(CupertinoIcons.xmark, size: 30),
-                        onPressed: () => _controller.swipe(CardSwiperDirection.left),
-                      ),
-                      IconButton.filled(
-                        style: IconButton.styleFrom(backgroundColor: Colors.white, foregroundColor: Colors.green),
-                        icon: const Icon(CupertinoIcons.checkmark_alt, size: 30),
-                        onPressed: () => _controller.swipe(CardSwiperDirection.right),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 20),
-                  CustomButton(
-                    text: "Delete Swiped Photos",
-                    onPressed: _confirmAndDelete,
-                  ),
-                ],
-              ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

@@ -20,3 +20,7 @@ class BuyProduct extends PurchaseEvent {
 }
 
 class RestorePurchases extends PurchaseEvent {}
+
+class CheckTrialStatus extends PurchaseEvent {}
+
+class StartTrial extends PurchaseEvent {}
