@@ -40,7 +40,7 @@ dependencies:
   flutter_card_swiper: ^2.0.0
   shared_preferences: ^2.2.2
   crypto: ^3.0.3
-  photo_manager: ^2.8.1
+  photo_manager: ^3.0.0
   google_mobile_ads: ^4.0.0
   google_fonts: ^6.1.0
 dev_dependencies:
@@ -95,3 +95,9 @@ flutter:
   #
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/to/font-from-package
+
+  fonts:
+    - family: Manjari
+      fonts:
+        - asset: fonts/Manjari-Thin.ttf
+          weight: 100
