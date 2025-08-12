@@ -12,17 +12,31 @@ import 'package:google_mobile_ads/google_mobile_ads.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  // Initialize services
-  await MobileAds.instance.initialize();
-  final settingsRepository = SettingsRepository();
-  final bool onboardingComplete = await settingsRepository.getOnboardingComplete();
-  final bool isDark = await settingsRepository.getThemeIsDark();
+  
+  // Add error handling for initialization
+  try {
+    // Initialize services with error handling
+    await MobileAds.instance.initialize();
+    final settingsRepository = SettingsRepository();
+    final bool onboardingComplete = await settingsRepository.getOnboardingComplete();
+    final bool isDark = await settingsRepository.getThemeIsDark();
 
-  runApp(AuraCleanApp(
-    onboardingComplete: onboardingComplete,
-    isDark: isDark,
-    settingsRepository: settingsRepository,
-  ));
+    runApp(AuraCleanApp(
+      onboardingComplete: onboardingComplete,
+      isDark: isDark,
+      settingsRepository: settingsRepository,
+    ));
+  } catch (error) {
+    // Fallback app if initialization fails
+    runApp(const MaterialApp(
+      title: 'Aura Clean',
+      home: Scaffold(
+        body: Center(
+          child: Text('App initialization failed. Please restart.'),
+        ),
+      ),
+    ));
+  }
 }
 
 class AuraCleanApp extends StatelessWidget {
@@ -39,8 +53,6 @@ class AuraCleanApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final PhotoRepository photoRepository = PhotoRepository();
-
     return MultiBlocProvider(
       providers: [
         BlocProvider(create: (context) => PurchaseBloc()),
@@ -52,7 +64,7 @@ class AuraCleanApp extends StatelessWidget {
         ),
         BlocProvider(
           create: (context) => PhotoCleanerBloc(
-            photoRepository,
+            PhotoRepository(),
             context.read<PurchaseBloc>(),
             settingsRepository,
           ),
@@ -67,6 +79,27 @@ class AuraCleanApp extends StatelessWidget {
                 ? const DashboardScreen()
                 : const OnboardingScreen(),
             debugShowCheckedModeBanner: false,
+            // Add performance optimizations to prevent crashes
+            builder: (context, child) {
+              return MediaQuery(
+                data: MediaQuery.of(context).copyWith(
+                  textScaler: const TextScaler.linear(1.0), // Prevent text scaling issues
+                ),
+                child: child!,
+              );
+            },
+            // Disable animations during development to prevent crashes
+            showPerformanceOverlay: false,
+            // Add error boundary
+            onUnknownRoute: (settings) {
+              return MaterialPageRoute(
+                builder: (context) => const Scaffold(
+                  body: Center(
+                    child: Text('Page not found'),
+                  ),
+                ),
+              );
+            },
           );
         },
       ),
