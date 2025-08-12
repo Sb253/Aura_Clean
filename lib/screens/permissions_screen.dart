@@ -10,19 +10,76 @@ class PermissionsScreen extends StatelessWidget {
   const PermissionsScreen({super.key});
 
   Future<void> _requestPermission(BuildContext context) async {
-    final PermissionState ps = await PhotoManager.requestPermissionExtend();
-    if (ps.isAuth) {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setBool('onboarding_complete', true);
+    try {
+      // First check current permission status
+      final currentStatus = await PhotoManager.requestPermissionExtend();
+      print('Current permission status: $currentStatus');
+      
+      if (currentStatus.isAuth) {
+        print('Permission already granted, proceeding to dashboard');
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setBool('onboarding_complete', true);
 
-      if (context.mounted) {
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (context) => const DashboardScreen()),
-        );
+        if (context.mounted) {
+          Navigator.of(context).pushReplacement(
+            MaterialPageRoute(builder: (context) => const DashboardScreen()),
+          );
+        }
+      } else {
+        print('Permission not granted, requesting permission...');
+        // Request permission explicitly
+        final newStatus = await PhotoManager.requestPermissionExtend();
+        print('New permission status after request: $newStatus');
+        
+        if (newStatus.isAuth) {
+          print('Permission granted after request, proceeding to dashboard');
+          final prefs = await SharedPreferences.getInstance();
+          await prefs.setBool('onboarding_complete', true);
+
+          if (context.mounted) {
+            Navigator.of(context).pushReplacement(
+              MaterialPageRoute(builder: (context) => const DashboardScreen()),
+            );
+          }
+        } else {
+          print('Permission still not granted, opening settings');
+          if (context.mounted) {
+            // Show a dialog explaining the issue
+            showDialog(
+              context: context,
+              builder: (context) => AlertDialog(
+                title: const Text('Permission Required'),
+                content: const Text(
+                  'Photo library access is required for Aura Clean to work. '
+                  'Please go to Settings > Apps > Aura Clean > Permissions and enable "Storage" permission.',
+                ),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    child: const Text('Cancel'),
+                  ),
+                  TextButton(
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                      PhotoManager.openSetting();
+                    },
+                    child: const Text('Open Settings'),
+                  ),
+                ],
+              ),
+            );
+          }
+        }
       }
-    } else {
+    } catch (e) {
+      print('Error requesting permission: $e');
       if (context.mounted) {
-        PhotoManager.openSetting();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error requesting permission: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
       }
     }
   }
