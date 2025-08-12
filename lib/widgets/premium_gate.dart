@@ -8,12 +8,14 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 class PremiumGate extends StatelessWidget {
   final Widget child;
   final String featureName;
+  final String featureKey;
   final VoidCallback? onUpgrade;
 
   const PremiumGate({
     super.key,
     required this.child,
     required this.featureName,
+    required this.featureKey,
     this.onUpgrade,
   });
 
@@ -59,6 +61,40 @@ class PremiumGate extends StatelessWidget {
           );
         }
 
+        // Check if feature is accessible after trial
+        if (state.accessibleFeatures.contains(featureKey)) {
+          // Basic feature - show with upgrade prompt
+          return Column(
+            children: [
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(12),
+                color: Colors.orange.shade100,
+                child: Row(
+                  children: [
+                    Icon(Icons.info_outline, color: Colors.orange.shade700),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'Basic feature - Upgrade for premium experience',
+                        style: TextStyle(
+                          color: Colors.orange.shade700,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                    TextButton(
+                      onPressed: () => _showUpgradeDialog(context),
+                      child: const Text('Upgrade'),
+                    ),
+                  ],
+                ),
+              ),
+              Expanded(child: child),
+            ],
+          );
+        }
+
         // If no trial and not premium, show upgrade prompt
         return _buildUpgradePrompt(context, state);
       },
@@ -90,28 +126,40 @@ class PremiumGate extends StatelessWidget {
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 8),
-          Text(
-            'Start your 14-day free trial or upgrade to premium to continue.',
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              color: Colors.grey.shade600,
+          if (state.hasTrialExpired)
+            Text(
+              'Your free trial has expired. Upgrade to premium to continue using this feature.',
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: Colors.red.shade600,
+                fontWeight: FontWeight.w500,
+              ),
+              textAlign: TextAlign.center,
+            )
+          else
+            Text(
+              'Start your 14-day free trial or upgrade to premium to continue.',
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: Colors.grey.shade600,
+              ),
+              textAlign: TextAlign.center,
             ),
-            textAlign: TextAlign.center,
-          ),
           const SizedBox(height: 32),
           Row(
             children: [
-              Expanded(
-                child: ElevatedButton(
-                  onPressed: () => _startTrial(context),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.blue.shade600,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 16),
+              if (!state.hasTrialExpired)
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: () => _startTrial(context),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.blue.shade600,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                    ),
+                    child: const Text('Start Free Trial'),
                   ),
-                  child: const Text('Start Free Trial'),
                 ),
-              ),
-              const SizedBox(width: 16),
+              if (!state.hasTrialExpired)
+                const SizedBox(width: 16),
               Expanded(
                 child: ElevatedButton(
                   onPressed: () => _showUpgradeDialog(context),

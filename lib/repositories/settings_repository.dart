@@ -7,6 +7,7 @@ class SettingsRepository {
   static const String _onboardingCompleteKey = 'onboarding_complete';
   static const String _trialStartDateKey = 'trial_start_date';
   static const String _trialUsedKey = 'trial_used';
+  static const String _trialEndDateKey = 'trial_end_date';
 
   Future<int> getDailyDeletionCount() async {
     final prefs = await SharedPreferences.getInstance();
@@ -58,10 +59,22 @@ class SettingsRepository {
     return null;
   }
 
+  Future<DateTime?> getTrialEndDate() async {
+    final prefs = await SharedPreferences.getInstance();
+    final dateString = prefs.getString(_trialEndDateKey);
+    if (dateString != null) {
+      return DateTime.parse(dateString);
+    }
+    return null;
+  }
+
   Future<void> startTrial() async {
     final prefs = await SharedPreferences.getInstance();
     final now = DateTime.now();
+    final trialEnd = now.add(const Duration(days: 14));
+    
     await prefs.setString(_trialStartDateKey, now.toIso8601String());
+    await prefs.setString(_trialEndDateKey, trialEnd.toIso8601String());
     await prefs.setBool(_trialUsedKey, true);
   }
 
@@ -73,26 +86,39 @@ class SettingsRepository {
       return true; // Trial hasn't been started yet
     }
     
-    final trialStartDate = await getTrialStartDate();
-    if (trialStartDate == null) {
-      return true; // No trial start date, consider it active
+    final trialEndDate = await getTrialEndDate();
+    if (trialEndDate == null) {
+      return true; // No trial end date, consider it active
     }
     
     final now = DateTime.now();
-    final trialEndDate = trialStartDate.add(const Duration(days: 14));
-    
     return now.isBefore(trialEndDate);
   }
 
+  Future<bool> hasTrialExpired() async {
+    final prefs = await SharedPreferences.getInstance();
+    final trialUsed = prefs.getBool(_trialUsedKey) ?? false;
+    
+    if (!trialUsed) {
+      return false; // Trial hasn't been started yet
+    }
+    
+    final trialEndDate = await getTrialEndDate();
+    if (trialEndDate == null) {
+      return false; // No trial end date, consider it active
+    }
+    
+    final now = DateTime.now();
+    return now.isAfter(trialEndDate);
+  }
+
   Future<int> getTrialDaysRemaining() async {
-    final trialStartDate = await getTrialStartDate();
-    if (trialStartDate == null) {
+    final trialEndDate = await getTrialEndDate();
+    if (trialEndDate == null) {
       return 14; // Trial hasn't started yet
     }
     
     final now = DateTime.now();
-    final trialEndDate = trialStartDate.add(const Duration(days: 14));
-    
     if (now.isAfter(trialEndDate)) {
       return 0; // Trial expired
     }
@@ -104,5 +130,39 @@ class SettingsRepository {
   Future<bool> hasUsedTrial() async {
     final prefs = await SharedPreferences.getInstance();
     return prefs.getBool(_trialUsedKey) ?? false;
+  }
+
+  // Feature access methods
+  Future<bool> canAccessFeature(String featureName) async {
+    // Premium users can access all features
+    // During trial, all features are accessible
+    // After trial, only basic features are accessible
+    
+    final isPremium = false; // This will be updated by PurchaseBloc
+    final trialActive = await isTrialActive();
+    
+    if (isPremium) return true;
+    if (trialActive) return true;
+    
+    // After trial, only basic features are allowed
+    return _isBasicFeature(featureName);
+  }
+
+  bool _isBasicFeature(String featureName) {
+    const basicFeatures = [
+      'photo_analysis',
+      'duplicate_detection',
+      'basic_review',
+      'storage_info',
+    ];
+    
+    return basicFeatures.contains(featureName);
+  }
+
+  // Ad display logic
+  Future<bool> shouldShowAds() async {
+    // Show ads during trial and after trial (unless premium)
+    // This will be updated by PurchaseBloc with actual premium status
+    return true;
   }
 }

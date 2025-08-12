@@ -8,6 +8,9 @@ class PurchaseState extends Equatable {
   final String? error;
   final bool isTrialActive;
   final int trialDaysRemaining;
+  final bool hasTrialExpired;
+  final bool shouldShowAds;
+  final List<String> accessibleFeatures;
 
   const PurchaseState({
     this.products = const [],
@@ -16,6 +19,9 @@ class PurchaseState extends Equatable {
     this.error,
     this.isTrialActive = false,
     this.trialDaysRemaining = 14,
+    this.hasTrialExpired = false,
+    this.shouldShowAds = true,
+    this.accessibleFeatures = const [],
   });
 
   PurchaseState copyWith({
@@ -25,6 +31,9 @@ class PurchaseState extends Equatable {
     String? error,
     bool? isTrialActive,
     int? trialDaysRemaining,
+    bool? hasTrialExpired,
+    bool? shouldShowAds,
+    List<String>? accessibleFeatures,
   }) {
     return PurchaseState(
       products: products ?? this.products,
@@ -33,9 +42,22 @@ class PurchaseState extends Equatable {
       error: error ?? this.error,
       isTrialActive: isTrialActive ?? this.isTrialActive,
       trialDaysRemaining: trialDaysRemaining ?? this.trialDaysRemaining,
+      hasTrialExpired: hasTrialExpired ?? this.hasTrialExpired,
+      shouldShowAds: shouldShowAds ?? this.shouldShowAds,
+      accessibleFeatures: accessibleFeatures ?? this.accessibleFeatures,
     );
   }
 
   @override
-  List<Object?> get props => [products, isPremium, purchasePending, error, isTrialActive, trialDaysRemaining];
+  List<Object?> get props => [
+    products, 
+    isPremium, 
+    purchasePending, 
+    error, 
+    isTrialActive, 
+    trialDaysRemaining,
+    hasTrialExpired,
+    shouldShowAds,
+    accessibleFeatures,
+  ];
 }

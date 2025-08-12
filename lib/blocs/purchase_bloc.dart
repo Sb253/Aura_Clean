@@ -64,12 +64,87 @@ class PurchaseBloc extends Bloc<PurchaseEvent, PurchaseState> {
 
   void _onCheckTrialStatus(CheckTrialStatus event, Emitter<PurchaseState> emit) async {
     final isTrialActive = await _settingsRepository.isTrialActive();
-    emit(state.copyWith(isTrialActive: isTrialActive));
+    final hasTrialExpired = await _settingsRepository.hasTrialExpired();
+    final trialDaysRemaining = await _settingsRepository.getTrialDaysRemaining();
+    final shouldShowAds = await _settingsRepository.shouldShowAds();
+    
+    // Determine accessible features based on trial and premium status
+    final accessibleFeatures = await _getAccessibleFeatures();
+    
+    emit(state.copyWith(
+      isTrialActive: isTrialActive,
+      hasTrialExpired: hasTrialExpired,
+      trialDaysRemaining: trialDaysRemaining,
+      shouldShowAds: shouldShowAds,
+      accessibleFeatures: accessibleFeatures,
+    ));
   }
 
   void _onStartTrial(StartTrial event, Emitter<PurchaseState> emit) async {
     await _settingsRepository.startTrial();
-    emit(state.copyWith(isTrialActive: true));
+    
+    // Update state after starting trial
+    final isTrialActive = await _settingsRepository.isTrialActive();
+    final trialDaysRemaining = await _settingsRepository.getTrialDaysRemaining();
+    final shouldShowAds = await _settingsRepository.shouldShowAds();
+    final accessibleFeatures = await _getAccessibleFeatures();
+    
+    emit(state.copyWith(
+      isTrialActive: isTrialActive,
+      trialDaysRemaining: trialDaysRemaining,
+      shouldShowAds: shouldShowAds,
+      accessibleFeatures: accessibleFeatures,
+    ));
+  }
+
+  Future<List<String>> _getAccessibleFeatures() async {
+    final isPremium = state.isPremium;
+    final trialActive = await _settingsRepository.isTrialActive();
+    
+    if (isPremium) {
+      // Premium users get all features
+      return [
+        'photo_analysis',
+        'duplicate_detection',
+        'similar_detection',
+        'screenshot_detection',
+        'large_video_detection',
+        'basic_review',
+        'swipe_review',
+        'bulk_deletion',
+        'storage_info',
+        'advanced_analytics',
+      ];
+    }
+    
+    if (trialActive) {
+      // During trial, all features are accessible
+      return [
+        'photo_analysis',
+        'duplicate_detection',
+        'similar_detection',
+        'screenshot_detection',
+        'large_video_detection',
+        'basic_review',
+        'swipe_review',
+        'bulk_deletion',
+        'storage_info',
+        'advanced_analytics',
+      ];
+    }
+    
+    // After trial, only basic features
+    return [
+      'photo_analysis',
+      'duplicate_detection',
+      'basic_review',
+      'storage_info',
+    ];
+  }
+
+  // Method to check if a specific feature is accessible
+  bool canAccessFeature(String featureName) {
+    return state.accessibleFeatures.contains(featureName);
   }
 
   void _onPurchaseUpdated(List<PurchaseDetails> purchaseDetailsList) {

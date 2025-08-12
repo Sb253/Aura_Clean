@@ -75,6 +75,23 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     ),
                   ),
                 ),
+              if (purchaseState.hasTrialExpired && !isPremium)
+                Container(
+                  margin: const EdgeInsets.only(right: 8),
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: Colors.red.shade100,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Text(
+                    'Trial Expired',
+                    style: TextStyle(
+                      color: Colors.red.shade700,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
               IconButton(
                 icon: const Icon(CupertinoIcons.settings),
                 onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const SettingsScreen())),
@@ -113,7 +130,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     },
                   ),
                 ),
-                if (_bannerAd != null && !isPremium)
+                if (_bannerAd != null && purchaseState.shouldShowAds)
                   SafeArea(
                     child: SizedBox(
                       width: _bannerAd!.size.width.toDouble(),
@@ -134,6 +151,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
       builder: (context, purchaseState) {
         final isTrialActive = purchaseState.isTrialActive;
         final trialDaysRemaining = purchaseState.trialDaysRemaining;
+        final hasTrialExpired = purchaseState.hasTrialExpired;
+        final canAccessSwipe = purchaseState.accessibleFeatures.contains('swipe_review');
         
         return Padding(
           padding: const EdgeInsets.only(bottom: 15.0),
@@ -165,23 +184,51 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     ],
                   ),
                 ),
+              if (hasTrialExpired && !isPremium && !canAccessSwipe)
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(8),
+                  margin: const EdgeInsets.only(bottom: 10),
+                  decoration: BoxDecoration(
+                    color: Colors.red.shade100,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(Icons.lock, color: Colors.red.shade700, size: 16),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          'Trial expired - Upgrade to access this feature',
+                          style: TextStyle(
+                            color: Colors.red.shade700,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ElevatedButton.icon(
-                icon: Icon(isPremium || isTrialActive ? CupertinoIcons.layers_alt_fill : CupertinoIcons.lock_fill),
-                label: Text(isPremium || isTrialActive ? "Quick Swipe Review" : "Start Free Trial"),
+                icon: Icon(canAccessSwipe ? CupertinoIcons.layers_alt_fill : CupertinoIcons.lock_fill),
+                label: Text(canAccessSwipe ? "Quick Swipe Review" : "Start Free Trial"),
                 onPressed: () {
-                  if (isPremium || isTrialActive) {
+                  if (canAccessSwipe) {
                     Navigator.of(context).push(MaterialPageRoute(builder: (_) => BlocProvider.value(
                       value: BlocProvider.of<PhotoCleanerBloc>(context),
                       child: const SwipeReviewScreen(),
                     )));
+                  } else if (hasTrialExpired) {
+                    _showUpgradeDialog(context);
                   } else {
                     _showTrialDialog(context);
                   }
                 },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: isPremium || isTrialActive 
+                  backgroundColor: canAccessSwipe 
                       ? Theme.of(context).colorScheme.secondary
-                      : Colors.blue.shade600,
+                      : hasTrialExpired ? Colors.red.shade600 : Colors.blue.shade600,
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 15),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
@@ -229,6 +276,48 @@ class _DashboardScreenState extends State<DashboardScreen> {
             onPressed: () {
               Navigator.of(ctx).pop();
               context.read<PurchaseBloc>().add(StartTrial());
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showUpgradeDialog(BuildContext context) {
+    showCupertinoDialog(
+      context: context,
+      builder: (ctx) => CupertinoAlertDialog(
+        title: const Text("Upgrade Required"),
+        content: const Text("Your free trial has expired. Please upgrade to access this feature."),
+        actions: [
+          CupertinoDialogAction(child: const Text("Cancel"), onPressed: () => Navigator.of(ctx).pop()),
+          CupertinoDialogAction(
+            isDefaultAction: true,
+            child: const Text("Upgrade"),
+            onPressed: () {
+              Navigator.of(ctx).pop();
+              Navigator.of(context).push(MaterialPageRoute(builder: (_) => const PaywallScreen()));
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showFeatureUpgradeDialog(BuildContext context, String featureName) {
+    showCupertinoDialog(
+      context: context,
+      builder: (ctx) => CupertinoAlertDialog(
+        title: Text("Upgrade Required for $featureName"),
+        content: Text("You need to upgrade to access the $featureName feature."),
+        actions: [
+          CupertinoDialogAction(child: const Text("Cancel"), onPressed: () => Navigator.of(ctx).pop()),
+          CupertinoDialogAction(
+            isDefaultAction: true,
+            child: const Text("Upgrade"),
+            onPressed: () {
+              Navigator.of(ctx).pop();
+              Navigator.of(context).push(MaterialPageRoute(builder: (_) => const PaywallScreen()));
             },
           ),
         ],
@@ -305,6 +394,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               _navigateToReview(context, 'Duplicates', state.duplicatePhotos);
             }
           },
+          featureKey: 'duplicate_photos',
         ),
         _buildCategoryCard(
           icon: CupertinoIcons.photo_on_rectangle,
@@ -316,6 +406,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               _navigateToReview(context, 'Similar Photos', state.similarPhotos);
             }
           },
+          featureKey: 'similar_photos',
         ),
         _buildCategoryCard(
           icon: CupertinoIcons.camera,
@@ -327,6 +418,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               _navigateToReview(context, 'Screenshots', state.screenshots);
             }
           },
+          featureKey: 'screenshots',
         ),
         _buildCategoryCard(
           icon: CupertinoIcons.video_camera_solid,
@@ -338,6 +430,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               _navigateToReview(context, 'Large Videos', state.largeVideos);
             }
           },
+          featureKey: 'large_videos',
         ),
       ],
     );
@@ -349,42 +442,103 @@ class _DashboardScreenState extends State<DashboardScreen> {
     required String subtitle,
     required Color color,
     required VoidCallback onTap,
+    required String featureKey,
   }) {
-    return FadeInUp(
-      delay: const Duration(milliseconds: 300),
-      child: GestureDetector(
-        onTap: onTap,
-        child: Container(
-          decoration: BoxDecoration(
-            color: Theme.of(context).cardColor,
-            borderRadius: BorderRadius.circular(20),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.05),
-                spreadRadius: 2,
-                blurRadius: 10,
+    return BlocBuilder<PurchaseBloc, PurchaseState>(
+      builder: (context, purchaseState) {
+        final canAccess = purchaseState.accessibleFeatures.contains(featureKey);
+        final isPremium = purchaseState.isPremium;
+        final isTrialActive = purchaseState.isTrialActive;
+        
+        return FadeInUp(
+          delay: const Duration(milliseconds: 300),
+          child: GestureDetector(
+            onTap: canAccess ? onTap : () => _showFeatureUpgradeDialog(context, title),
+            child: Container(
+              decoration: BoxDecoration(
+                color: canAccess ? Theme.of(context).cardColor : Colors.grey.shade200,
+                borderRadius: BorderRadius.circular(20),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.05),
+                    spreadRadius: 2,
+                    blurRadius: 10,
+                  ),
+                ],
               ),
-            ],
-          ),
-          child: Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Icon(icon, size: 30, color: color),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(title, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
-                    Text(subtitle, style: const TextStyle(fontSize: 14, color: Colors.grey)),
-                  ],
-                ),
-              ],
+              child: Stack(
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Icon(
+                              icon, 
+                              size: 30, 
+                              color: canAccess ? color : Colors.grey.shade400
+                            ),
+                            if (!canAccess && !isPremium)
+                              Icon(
+                                Icons.lock,
+                                size: 16,
+                                color: Colors.grey.shade600,
+                              ),
+                          ],
+                        ),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              title, 
+                              style: TextStyle(
+                                fontSize: 18, 
+                                fontWeight: FontWeight.w600,
+                                color: canAccess ? null : Colors.grey.shade600,
+                              )
+                            ),
+                            Text(
+                              subtitle, 
+                              style: TextStyle(
+                                fontSize: 14, 
+                                color: canAccess ? Colors.grey : Colors.grey.shade400
+                              )
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                  if (!canAccess && !isPremium)
+                    Positioned(
+                      top: 8,
+                      right: 8,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: isTrialActive ? Colors.blue.shade100 : Colors.orange.shade100,
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Text(
+                          isTrialActive ? 'Trial' : 'Premium',
+                          style: TextStyle(
+                            fontSize: 10,
+                            color: isTrialActive ? Colors.blue.shade700 : Colors.orange.shade700,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
+              ),
             ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 }

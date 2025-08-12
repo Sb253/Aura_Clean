@@ -89,6 +89,7 @@ class _SwipeReviewScreenState extends State<SwipeReviewScreen> {
       body: SafeArea(
         child: PremiumGate(
           featureName: 'Tinder-like Swipe Review',
+          featureKey: 'swipe_review',
           child: Column(
             children: [
               if (_photosToReview.isEmpty)
