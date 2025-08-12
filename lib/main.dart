@@ -4,8 +4,7 @@ import 'package:aura_clean/blocs/theme_bloc.dart';
 import 'package:aura_clean/blocs/theme_state.dart';
 import 'package:aura_clean/repositories/photo_repository.dart';
 import 'package:aura_clean/repositories/settings_repository.dart';
-import 'package:aura_clean/screens/dashboard_screen.dart';
-import 'package:aura_clean/screens/onboarding_screen.dart';
+import 'package:aura_clean/screens/splash_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
@@ -75,9 +74,7 @@ class AuraCleanApp extends StatelessWidget {
           return MaterialApp(
             title: 'Aura Clean',
             theme: themeState.themeData,
-            home: onboardingComplete
-                ? const DashboardScreen()
-                : const OnboardingScreen(),
+            home: const SplashScreen(),
             debugShowCheckedModeBanner: false,
             // Add performance optimizations to prevent crashes
             builder: (context, child) {

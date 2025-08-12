@@ -100,24 +100,18 @@ class _SwipeReviewScreenState extends State<SwipeReviewScreen> {
                 Expanded(
                   child: CardSwiper(
                     controller: _controller,
-                    cardsCount: _photosToReview.length,
-                    onSwipe: (index, percentThresholdX, direction) {
+                    cards: _photosToReview.map((photo) => PhotoCard(photo: photo)).toList(),
+                    onSwipe: (previousIndex, direction) {
                       if (direction == CardSwiperDirection.left) {
                         setState(() {
-                          final photo = _photosToReview[index];
+                          final photo = _photosToReview[previousIndex];
                           _photosToDelete.add(photo);
                           _spaceToFree += photo.size;
                         });
                       }
-                      return true;
                     },
                     numberOfCardsDisplayed: 3,
-                    backCardOffset: const Offset(40, 40),
                     padding: const EdgeInsets.all(24.0),
-                    cardBuilder: (context, index, percentThresholdX, percentThresholdY) {
-                      final photo = _photosToReview[index];
-                      return PhotoCard(photo: photo);
-                    },
                   ),
                 ),
               Padding(
@@ -135,12 +129,12 @@ class _SwipeReviewScreenState extends State<SwipeReviewScreen> {
                         IconButton.filled(
                           style: IconButton.styleFrom(backgroundColor: Colors.white, foregroundColor: Colors.red),
                           icon: const Icon(CupertinoIcons.xmark, size: 30),
-                          onPressed: () => _controller.swipe(CardSwiperDirection.left),
+                          onPressed: () => _controller.swipeLeft(),
                         ),
                         IconButton.filled(
                           style: IconButton.styleFrom(backgroundColor: Colors.white, foregroundColor: Colors.green),
                           icon: const Icon(CupertinoIcons.checkmark_alt, size: 30),
-                          onPressed: () => _controller.swipe(CardSwiperDirection.right),
+                          onPressed: () => _controller.swipeRight(),
                         ),
                       ],
                     ),
